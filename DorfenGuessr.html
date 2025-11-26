@@ -1,0 +1,151 @@
+<DorfenGuessr html>
+<html>
+<head>
+    <title>Geo-Spiel</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 500px;
+        }
+
+        /* Sichtbarer Distanzzähler */
+        #distanceCounter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sichtbarer Zähler -->
+    <div id="distanceCounter">Gesamtdistanz: 0 m</div>
+
+    <div id="map"></div>
+
+    <script>
+        // --- Karte ---
+        var map = L.map('map').setView([48.273561, 12.151746], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // --- Roter Marker für richtige Position ---
+        var redIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // --- 30 Beispiel-Locations ---
+        var locations = [
+            [48.273561, 12.151746],
+            [48.280000, 12.160000],
+            [48.260000, 12.150000],
+            [48.290000, 12.140000],
+            [48.275000, 12.145000],
+            [48.285000, 12.155000],
+            [48.265000, 12.160000],
+            [48.270000, 12.170000],
+            [48.280500, 12.150500],
+            [48.274000, 12.157000],
+            [48.276400, 12.149900],
+            [48.262000, 12.145600],
+            [48.281200, 12.161300],
+            [48.267800, 12.152200],
+            [48.271100, 12.142000],
+            [48.269900, 12.154400],
+            [48.285500, 12.148800],
+            [48.272700, 12.165500],
+            [48.261500, 12.158800],
+            [48.274900, 12.144400],
+            [48.283300, 12.147700],
+            [48.278800, 12.159900],
+            [48.268800, 12.148200],
+            [48.279900, 12.162200],
+            [48.277000, 12.141500],
+            [48.264400, 12.151100],
+            [48.281800, 12.154800],
+            [48.275900, 12.167000],
+            [48.270400, 12.153000],
+            [48.284200, 12.149500]
+        ];
+
+        var currentRound = 0;
+        var guessMarker = null;
+        var correctMarker = null;
+        var waitingForNextRound = false;
+
+        // --- Gesamtdistanz-Zähler ---
+        var totalDistance = 0;
+
+        function updateCounter() {
+            document.getElementById("distanceCounter").innerText = 
+                "Gesamtdistanz: " + Math.round(totalDistance) + " m";
+        }
+
+        alert("Klicke auf die Karte, um Runde 1 zu starten!");
+
+        map.on('click', function(e) {
+
+            // Falls Runde beendet ist → neue Runde starten
+            if (waitingForNextRound) {
+                waitingForNextRound = false;
+
+                // alte Marker löschen
+                if (guessMarker) map.removeLayer(guessMarker);
+                if (correctMarker) map.removeLayer(correctMarker);
+
+                currentRound++;
+
+                // Wenn alles fertig ist → Gesamtdistanz anzeigen
+                if (currentRound >= locations.length) {
+                    alert("Alle Runden abgeschlossen!\n\nGesamtdistanz: " + Math.round(totalDistance) + " Meter");
+                    return;
+                }
+
+                alert("Runde " + (currentRound + 1) + ": Tippe einen Ort!");
+                return;
+            }
+
+            // Tipp setzen
+            guessMarker = L.marker(e.latlng).addTo(map);
+
+            // Richtige Position holen
+            var correctLatLng = L.latLng(
+                locations[currentRound][0],
+                locations[currentRound][1]
+            );
+
+            // Richtige Position anzeigen
+            correctMarker = L.marker(correctLatLng, {icon: redIcon}).addTo(map);
+
+            // Distanz berechnen
+            var distance = e.latlng.distanceTo(correctLatLng);
+
+            // Gesamtdistanz erhöhen
+            totalDistance += distance;
+            updateCounter();
+
+            alert(
+                "Distanz dieser Runde: " + Math.round(distance) + " Meter\n" +
+                "Klicke erneut auf die Karte für die nächste Runde."
+            );
+
+            waitingForNextRound = true;
+        });
+    </script>
+</body>
+</html>
